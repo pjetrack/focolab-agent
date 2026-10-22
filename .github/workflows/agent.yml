@@ -1,14 +1,11 @@
-name: FocoLab - executor experimental
+name: FocoLab - executor por conclusão
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'agent/run.py'
       - '.github/workflows/agent.yml'
-  workflow_dispatch:
-  schedule:
-    - cron: '*/5 19-20 22 10 *'
-    - cron: '0 21 22 10 *'
 permissions:
   contents: write
 concurrency:
@@ -17,20 +14,32 @@ concurrency:
 jobs:
   operate:
     runs-on: ubuntu-latest
-    timeout-minutes: 4
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Execute permitted iteration
-        run: python agent/run.py
-      - name: Commit output
+      - name: Executar próxima ação imediatamente após conclusão da anterior
+        shell: bash
+        run: |
+          set -euo pipefail
+          for step in 1 2 3 4 5; do
+            python agent/run.py
+            if ! git diff --quiet -- output/; then
+              echo "Etapa $step concluída. Prosseguindo sem agendamento."
+            else
+              echo "Nenhuma alteração; encerrando ciclo."
+              break
+            fi
+          done
+      - name: Registrar resultados
+        shell: bash
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add output/
           if ! git diff --cached --quiet; then
-            git commit -m "FocoLab: rotina gratuita"
+            git commit -m "FocoLab: ciclo sequencial por conclusão"
             git push
           fi
