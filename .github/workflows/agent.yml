@@ -1,5 +1,10 @@
 name: FocoLab - executor experimental
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'agent/run.py'
+      - '.github/workflows/agent.yml'
   workflow_dispatch:
   schedule:
     - cron: '*/5 19-20 22 10 *'
